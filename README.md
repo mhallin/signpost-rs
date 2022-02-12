@@ -7,10 +7,6 @@ and iOS.
 This library exposes a Rust interface to the Signposts API which automatically
 turns itself off on unsupported platforms.
 
-```toml
-signposts = "0.1"
-```
-
 ## Usage
 
 Use a combination of events and intervals to measure times of algorithms and
@@ -47,7 +43,3 @@ fn myalgorithm() {
 
 Enable the `disable-signposts` feature to make the logging function no-ops even
 on macOS/iOS.
-
-```toml
-disable-signposts = { version = "0.1", features = ["disable-signposts"] }
-```
