@@ -1,0 +1,9 @@
+[package]
+name = "signpost_tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[dependencies]
+signpost = { path = "../signpost" }

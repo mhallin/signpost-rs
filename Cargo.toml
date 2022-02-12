@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "signpost",
+    "signpost_derive",
+    "signpost_tests",
+]
