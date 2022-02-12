@@ -1,6 +1,8 @@
 #![warn(missing_docs)]
 
 //! Signpost library for macOS and iOS
+//! 
+//! See https://github.com/mhallin/signpost-rs
 
 pub use signpost_derive::{begin_interval, const_poi_logger, emit_event};
 
@@ -22,13 +24,22 @@ mod sys {
         pub static mut __dso_handle: usize;
         pub static mut _os_log_default: usize;
 
-        #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+        #[cfg(all(
+            not(feature = "disable-signposts"),
+            any(target_os = "macos", target_os = "ios")
+        ))]
         pub fn os_log_create(subsystem: *const c_char, category: *const c_char) -> os_log_t;
 
-        #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+        #[cfg(all(
+            not(feature = "disable-signposts"),
+            any(target_os = "macos", target_os = "ios")
+        ))]
         pub fn os_signpost_enabled(log: os_log_t) -> bool;
 
-        #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+        #[cfg(all(
+            not(feature = "disable-signposts"),
+            any(target_os = "macos", target_os = "ios")
+        ))]
         pub fn _os_signpost_emit_with_name_impl(
             dso: *mut c_void,
             log: os_log_t,
@@ -125,7 +136,10 @@ impl OsLog {
     ///
     /// Avoid creating event names at runtime, prefer using the
     /// [emit_event] macro instead.
-    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+    #[cfg(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    ))]
     pub fn emit_event(&self, id: u64, name: &CStr) {
         let log = self.get();
         let mut buf = [0u8; 64];
@@ -146,7 +160,10 @@ impl OsLog {
         }
     }
 
-    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    #[cfg(not(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    )))]
     pub fn emit_event(&self, _id: u64, _name: &CStr) {}
 
     /// Start a timed event
@@ -156,7 +173,10 @@ impl OsLog {
     ///
     /// Avoid create interval names at runtime, prefer using the
     /// [begin_interval] macro instead.
-    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+    #[cfg(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    ))]
     pub fn begin_interval<'a>(&'a self, id: u64, name: &'a CStr) -> SignpostInterval<'a> {
         let log_handle = self.get();
         let mut buf = [0u8; 64];
@@ -183,7 +203,10 @@ impl OsLog {
         }
     }
 
-    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    #[cfg(not(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    )))]
     pub fn begin_interval<'a>(&'a self, id: u64, name: &'a CStr) -> SignpostInterval<'a> {
         SignpostInterval {
             log: self,
@@ -192,7 +215,10 @@ impl OsLog {
         }
     }
 
-    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+    #[cfg(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    ))]
     fn get(&self) -> sys::os_log_t {
         unsafe {
             self.init.call_once(|| {
@@ -206,14 +232,20 @@ impl OsLog {
         }
     }
 
-    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    #[cfg(not(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    )))]
     fn get(&self) -> sys::os_log_t {
         0
     }
 }
 
 impl<'a> Drop for SignpostInterval<'a> {
-    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
+    #[cfg(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    ))]
     fn drop(&mut self) {
         let mut buf = [0u8; 4];
         let log_handle = self.log.get();
@@ -234,6 +266,9 @@ impl<'a> Drop for SignpostInterval<'a> {
         }
     }
 
-    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    #[cfg(not(all(
+        not(feature = "disable-signposts"),
+        any(target_os = "macos", target_os = "ios")
+    )))]
     fn drop(&mut self) {}
 }
