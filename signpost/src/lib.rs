@@ -22,10 +22,13 @@ mod sys {
         pub static mut __dso_handle: usize;
         pub static mut _os_log_default: usize;
 
+        #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
         pub fn os_log_create(subsystem: *const c_char, category: *const c_char) -> os_log_t;
 
+        #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
         pub fn os_signpost_enabled(log: os_log_t) -> bool;
 
+        #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
         pub fn _os_signpost_emit_with_name_impl(
             dso: *mut c_void,
             log: os_log_t,
@@ -101,7 +104,7 @@ impl OsLog {
         unsafe { &*(b"PointsOfInterest\0" as *const [u8] as *const CStr) };
 
     /// Change the category of a newly constructed logger
-    /// 
+    ///
     /// ```
     /// use signpost::{OsLog, const_poi_logger};
     /// static LOGGER: OsLog = const_poi_logger!("com.yourapp")
@@ -113,15 +116,16 @@ impl OsLog {
     }
 
     /// Emit an event to the logger
-    /// 
+    ///
     /// Use this to add a single point in time to the "Points of Interest"
     /// in Instruments.
-    /// 
+    ///
     /// The ID is arbitrary but must *not* be one of the built-in sentinel
     /// values: zero or u64::MAX.
-    /// 
+    ///
     /// Avoid creating event names at runtime, prefer using the
     /// [emit_event] macro instead.
+    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
     pub fn emit_event(&self, id: u64, name: &CStr) {
         let log = self.get();
         let mut buf = [0u8; 64];
@@ -142,13 +146,17 @@ impl OsLog {
         }
     }
 
+    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    pub fn emit_event(&self, _id: u64, _name: &CStr) {}
+
     /// Start a timed event
-    /// 
+    ///
     /// The ID is used to disambiguate overlapping events, so make sure that
     /// it's unique among events that can overlap in time.
-    /// 
-    /// Avoid create interval names at runtime, prefer using the 
+    ///
+    /// Avoid create interval names at runtime, prefer using the
     /// [begin_interval] macro instead.
+    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
     pub fn begin_interval<'a>(&'a self, id: u64, name: &'a CStr) -> SignpostInterval<'a> {
         let log_handle = self.get();
         let mut buf = [0u8; 64];
@@ -175,6 +183,16 @@ impl OsLog {
         }
     }
 
+    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    pub fn begin_interval<'a>(&'a self, id: u64, name: &'a CStr) -> SignpostInterval<'a> {
+        SignpostInterval {
+            log: self,
+            id,
+            name,
+        }
+    }
+
+    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
     fn get(&self) -> sys::os_log_t {
         unsafe {
             self.init.call_once(|| {
@@ -187,9 +205,15 @@ impl OsLog {
             self.handle.load(Ordering::SeqCst)
         }
     }
+
+    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    fn get(&self) -> sys::os_log_t {
+        0
+    }
 }
 
 impl<'a> Drop for SignpostInterval<'a> {
+    #[cfg(all(not(feature = "disable-signposts"), target_os = "macos"))]
     fn drop(&mut self) {
         let mut buf = [0u8; 4];
         let log_handle = self.log.get();
@@ -209,4 +233,7 @@ impl<'a> Drop for SignpostInterval<'a> {
             }
         }
     }
+
+    #[cfg(not(all(not(feature = "disable-signposts"), target_os = "macos")))]
+    fn drop(&mut self) {}
 }

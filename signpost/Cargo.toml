@@ -4,5 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
+[features]
+default = []
+disable-signposts = []
+
 [dependencies]
 signpost_derive = { path = "../signpost_derive" }
